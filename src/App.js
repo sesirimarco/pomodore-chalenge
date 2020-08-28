@@ -6,6 +6,8 @@ const Row = ReactBootstrap.Row;
 const Col = ReactBootstrap.Col;
 const Button = ReactBootstrap.Button;
 const Alert = ReactBootstrap.Alert;
+const InputGroup = ReactBootstrap.InputGroup;
+const FormControl = ReactBootstrap.FormControl;
 
 //const SESSION = 1500;
 const TIMER_LABEL_SESSION = 'Session';
@@ -86,101 +88,118 @@ const App = () => {
         audioRef.current.currentTime = 0;
     };
     return (
-        <Container style={{ minWidth: 300, maxWidth: 700 }}>
-            <h1> Pomofocus </h1>
-            <Row>
+        <Container className="border rounded-lg text-center" style={{ minWidth: 300, maxWidth: 700 }}>
+            <h1 className="display-4 text-secondary py-4"> Pomofocus </h1>
+            <Row className="justify-content-center">
                 <Col>
-                    <div id="session-label"> session length</div>
-                    <Button 
-                        variant="info"
-                        id="session-decrement"
-                        onClick={() => {
-                            if (sessionLength > 1 && sessionLength < 60) {
-								console.log(sessionLength - 1)
-                                setSessionLength(sessionLength - 1);
-								setTimeLeft(showTime((sessionLength - 1) * 60));
-								setCurrentTime((sessionLength - 1) * 60);
-                            }
-                        }}
-                    >
-                        -
-                    </Button>
-                    <Alert 
-                        variant="info" 
-                        id="session-length"
-                        className="d-inline"
-                    >   
-                        <span id="session-length">{sessionLength}</span>
-                    </Alert>
-                    <Button
-                        variant="info"
-                        id="session-increment"
-                        onClick={() => {
-                            if (sessionLength < 60) {
-                                setSessionLength(sessionLength + 1);
-                                setTimeLeft(showTime((sessionLength + 1) * 60));
-                            }
-                        }}
-                    >
-                        +
-                    </Button>
+                    <div id="session-label" className="text-secondary pb-1"> Session length</div>
+                    
+                    <InputGroup className="mx-auto" style={{width:130}} >
+                        <Button 
+                            variant="info"
+                            id="session-decrement"
+                            onClick={() => {
+                                if (sessionLength > 1 && sessionLength < 60) {
+                                    console.log(sessionLength - 1)
+                                    setSessionLength(sessionLength - 1);
+                                    setTimeLeft(showTime((sessionLength - 1) * 60));
+                                    setCurrentTime((sessionLength - 1) * 60);
+                                }
+                            }}
+                        >
+                            -
+                        </Button>
+                        <FormControl 
+                            id="session-length"
+                            value={sessionLength}
+                            style={{maxWidth:45}}
+                            className="mx-2 text-secondary"
+                        >   
+                        </FormControl>
+                        <Button
+                            variant="info"
+                            id="session-increment"
+                            onClick={() => {
+                                if (sessionLength < 60) {
+                                    setSessionLength(sessionLength + 1);
+                                    setTimeLeft(showTime((sessionLength + 1) * 60));
+                                }
+                            }}
+                        >
+                            +
+                        </Button>
+                    </InputGroup>
+                    
                 </Col>
                 <Col>
-                    <div id="break-label">Break</div>
-                    <Button
-                        variant="info"
-                        id="break-decrement"
-                        onClick={() => {
-                            setShortBreak(shortBreak > 1 ? shortBreak - 1 : 1);
-                        }}
-                    >
-                        -
-                    </Button>
-                    <Alert 
-                        variant="info" 
-                        id="session-length"
-                        className="d-inline"
-                    > 
-                        <span id="break-length">{shortBreak}</span>
-                    </Alert>
-                    <Button
-                        variant="info"
-                        id="break-increment"
-                        onClick={() => {
-                            setShortBreak(
-                                shortBreak < 60 ? shortBreak + 1 : 60
-                            );
-                        }}
-                    >
-                        +
-                    </Button>
+                    <div 
+                        id="break-label" 
+                        className="text-secondary pb-1"
+                    >Break</div>
+                    <InputGroup className="mx-auto" style={{width:130}}>
+                        <Button 
+                            variant="info"
+                            onClick={() => {
+                                setShortBreak(
+                                    shortBreak < 60 ? shortBreak + 1 : 60
+                                );
+                            }}
+                        >+</Button>
+                        <FormControl 
+                            id="break-length" 
+                            value={shortBreak} 
+                            style={{maxWidth:45}}
+                            className="mx-2 text-secondary"
+                        />
+                        <Button 
+                            variant="info"
+                            id="break-decrement"
+                            onClick={() => {
+                                setShortBreak(shortBreak > 1 ? shortBreak - 1 : 1);
+                            }}
+                        >-</Button>
+                    </InputGroup>
                 </Col>
             </Row>
             <Row>
-                <Col className="offset-3">
-                    <div id="timer-label" className="pt-2">
-                        {timerLabel}
+                <Col className="pt-2">
+                    <div 
+                        className="border 
+                            rounded-pill 
+                            my-4 
+                            w-50 
+                            mx-auto 
+                            py-2 
+                            shadow-sm"
+                        >
+                        <div id="timer-label" className="pt-3">
+                            <h4 className="text-secondary">{timerLabel}</h4>
+                        </div>
+                        <div id="time-left" className="timer-font text-info">
+                            {timeLeft}
+                        </div>
                     </div>
-                    <div id="time-left" className="pt-2">
-                        {timeLeft}
-                    </div>
-                    <div className="p-2">
-                        <button
+                    <div className="pb-5 pt-3">
+                        <Button
+                            variant="info"
+                            className="mx-4"
                             id="start_stop"
                             onClick={() => {
                                 setIsRunning(!isRunning);
                             }}
                         >
                             {!isRunning ? 'Start' : 'Stop'}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                            variant="info"
+                            className="mx-4"
                             id="reset"
                             onClick={() => {
                                 reset();
                             }}
                         >
                             Reset
-                        </button>
+                        </Button>
                     </div>
                 </Col>
             </Row>
