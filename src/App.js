@@ -5,7 +5,6 @@ const Container = ReactBootstrap.Container;
 const Row = ReactBootstrap.Row;
 const Col = ReactBootstrap.Col;
 const Button = ReactBootstrap.Button;
-const Alert = ReactBootstrap.Alert;
 const InputGroup = ReactBootstrap.InputGroup;
 const FormControl = ReactBootstrap.FormControl;
 
@@ -15,9 +14,7 @@ const TIMER_LABEL_BREAK = 'Break';
 const SESSION_LENGTH = 25;
 const SHORT_BREAK = 5;
 
-const showTime = (min) => {
-    const minutes = Math.floor(min / 60);
-    const seconds = min - minutes * 60;
+const showTime = (minutes, seconds) => {
     const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
     const displaySeconds = seconds < 10 ? '0' + seconds : seconds;
     return `${displayMinutes}:${displaySeconds}`;
@@ -25,19 +22,20 @@ const showTime = (min) => {
 const App = () => {
     const audioRef = React.useRef(null);
 
-	const [currentTime, setCurrentTime] = React.useState(SESSION_LENGTH * 60);
+    //const [currentTime, setCurrentTime] = React.useState(SESSION_LENGTH * 60);
     
-    const [timeLeft, setTimeLeft] = React.useState(showTime(currentTime));
+    const [timeMinutes, setTimeMinutes] = React.useState(SESSION_LENGTH);
+    const [timeSeconds, setTimeSeconds] = React.useState(0);
+    const [timeLeft, setTimeLeft] = React.useState(showTime(SESSION_LENGTH, 0));
     const [timerLabel, setTimerlabel] = React.useState(TIMER_LABEL_SESSION);
-    
     const [sessionLength, setSessionLength] = React.useState(SESSION_LENGTH);
     const [shortBreak, setShortBreak] = React.useState(SHORT_BREAK);
     const [isSessionStatus, setIsSessionStatus] = React.useState(true);
-    
     const [isRunning, setIsRunning] = React.useState(false);
-    const [isRunningBreak, setIsRunningBreak] = React.useState(false);
     
     let timerInterval = null;
+
+
     React.useEffect(() => {
         
 		if (isRunning) {
@@ -51,33 +49,41 @@ const App = () => {
         return () => {
             clearInterval(timerInterval);
         };
-    }, [isRunning, currentTime]);
+    }, [isRunning, timeSeconds]);
+    
+    const updateMinutes = () => {
+			setTimeMinutes(timeMinutes - 1);
+    };
     
 	const handleTime = () => {
-		if ( currentTime > 0) {
-			setTimeLeft(showTime(currentTime - 1));
-			setCurrentTime(currentTime - 1);
-			
-		}
-		if (currentTime === 0) {
-            setTimeLeft('00:00');
+        setTimeLeft(showTime(timeMinutes, timeSeconds));
+		if (timeMinutes === 0 && timeSeconds === 0) {
+            //setTimeLeft('00:00');
+            //audioRef.current.pause();
+            //audioRef.current.currentTime = 0;
             audioRef.current.play();
-            clearInterval(timerInterval);
             if(isSessionStatus) {
                 setTimerlabel(TIMER_LABEL_BREAK);
-                setCurrentTime(shortBreak * 60);
+                setTimeMinutes(shortBreak);
+                setTimeSeconds(1);
                 setIsSessionStatus(false);    
             }else {
                 
                 setTimerlabel(TIMER_LABEL_SESSION);
-                setCurrentTime(SESSION_LENGTH * 60);
+                setTimeMinutes(sessionLength);
+                setTimeSeconds(1);
                 setIsSessionStatus(true);
             }
-		}
+		} else if ( timeSeconds === 0) {
+            updateMinutes();
+            setTimeSeconds(59);
+        } else {
+            setTimeSeconds(timeSeconds - 1);
+        }
     };
     const reset = () => {
-        setTimeLeft(showTime(SESSION_LENGTH * 60));
-        setCurrentTime(SESSION_LENGTH * 60);
+        setTimeLeft(showTime(SESSION_LENGTH, 0));
+        setTimeMinutes(SESSION_LENGTH);
         setShortBreak(SHORT_BREAK);
         setIsRunning(false);
         setTimerlabel(TIMER_LABEL_SESSION);
@@ -95,34 +101,45 @@ const App = () => {
                     <div id="session-label" className="text-secondary pb-1"> Session length</div>
                     
                     <InputGroup className="mx-auto" style={{width:130}} >
-                        <Button 
+                        <Button
+                            disabled={isRunning} 
                             variant="info"
                             id="session-decrement"
                             onClick={() => {
-                                if (sessionLength > 1 && sessionLength < 60) {
-                                    console.log(sessionLength - 1)
+                                if (sessionLength > 1 ) {
                                     setSessionLength(sessionLength - 1);
-                                    setTimeLeft(showTime((sessionLength - 1) * 60));
-                                    setCurrentTime((sessionLength - 1) * 60);
+                                    setTimeLeft(showTime((sessionLength - 1), 0));
+                                    setTimeMinutes((sessionLength - 1));
                                 }
                             }}
                         >
                             -
                         </Button>
                         <FormControl 
+                            disabled={isRunning}
                             id="session-length"
                             value={sessionLength}
+                            onChange={(e) => {
+                                let currentMinutes = 
+                                e.target.value 
+                                ? parseInt(e.target.value)
+                                : 1;
+                                setSessionLength(currentMinutes);
+                                setTimeLeft(showTime(currentMinutes, timeSeconds));
+                                setTimeMinutes((currentMinutes));
+                            }}
                             style={{maxWidth:45}}
                             className="mx-2 text-secondary"
                         >   
                         </FormControl>
                         <Button
+                            disabled={isRunning}
                             variant="info"
                             id="session-increment"
                             onClick={() => {
                                 if (sessionLength < 60) {
                                     setSessionLength(sessionLength + 1);
-                                    setTimeLeft(showTime((sessionLength + 1) * 60));
+                                    setTimeLeft(showTime((sessionLength + 1) , 0));
                                 }
                             }}
                         >
@@ -137,27 +154,38 @@ const App = () => {
                         className="text-secondary pb-1"
                     >Break</div>
                     <InputGroup className="mx-auto" style={{width:130}}>
-                        <Button 
-                            variant="info"
-                            onClick={() => {
-                                setShortBreak(
-                                    shortBreak < 60 ? shortBreak + 1 : 60
-                                );
-                            }}
-                        >+</Button>
-                        <FormControl 
-                            id="break-length" 
-                            value={shortBreak} 
-                            style={{maxWidth:45}}
-                            className="mx-2 text-secondary"
-                        />
-                        <Button 
+                        <Button
+                            disabled={isRunning} 
                             variant="info"
                             id="break-decrement"
                             onClick={() => {
                                 setShortBreak(shortBreak > 1 ? shortBreak - 1 : 1);
                             }}
                         >-</Button>
+                        <FormControl
+                            disabled={isRunning} 
+                            id="break-length" 
+                            value={shortBreak}
+                            onChange={(e) => {
+                                let currentMinutesBreak = 
+                                e.target.value 
+                                ? parseInt(e.target.value)
+                                : 1;
+                                setShortBreak(currentMinutesBreak);
+                            }}
+                            style={{maxWidth:45}}
+                            className="mx-2 text-secondary"
+                        />
+                        <Button
+                            disabled={isRunning} 
+                            variant="info"
+                            id="break-increment"
+                            onClick={() => {
+                                setShortBreak(
+                                    shortBreak < 60 ? shortBreak + 1 : 60
+                                );
+                            }}
+                        >+</Button>                        
                     </InputGroup>
                 </Col>
             </Row>
