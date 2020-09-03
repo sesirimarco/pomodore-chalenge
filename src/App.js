@@ -8,7 +8,6 @@ const Button = ReactBootstrap.Button;
 const InputGroup = ReactBootstrap.InputGroup;
 const FormControl = ReactBootstrap.FormControl;
 
-//const SESSION = 1500;
 const TIMER_LABEL_SESSION = 'Session';
 const TIMER_LABEL_BREAK = 'Break';
 const SESSION_LENGTH = 25;
@@ -20,10 +19,9 @@ const showTime = (minutes, seconds) => {
     return `${displayMinutes}:${displaySeconds}`;
 };
 const App = () => {
-    const audioRef = React.useRef(null);
-
-    //const [currentTime, setCurrentTime] = React.useState(SESSION_LENGTH * 60);
-    
+    const audioRef = React.useRef(null);    
+    const intervaleRef = React.useRef(0);
+    const handlerTimeRef = React.useRef(null);
     const [timeMinutes, setTimeMinutes] = React.useState(SESSION_LENGTH);
     const [timeSeconds, setTimeSeconds] = React.useState(0);
     const [timeLeft, setTimeLeft] = React.useState(showTime(SESSION_LENGTH, 0));
@@ -33,21 +31,18 @@ const App = () => {
     const [isSessionStatus, setIsSessionStatus] = React.useState(true);
     const [isRunning, setIsRunning] = React.useState(false);
     
-    let timerInterval = null;
-
-
     React.useEffect(() => {
         
 		if (isRunning) {
-            timerInterval = setInterval(() => {
-				handleTime();
+            intervaleRef.current = setInterval(() => {
+				handlerTimeRef.current();
 			}, 1000);
 		} else {
-			clearInterval(timerInterval);
+			clearInterval(intervaleRef.current);
 		}
 		
         return () => {
-            clearInterval(timerInterval);
+            clearInterval(intervaleRef.current);
         };
     }, [isRunning, timeSeconds]);
     
@@ -58,9 +53,6 @@ const App = () => {
 	const handleTime = () => {
         setTimeLeft(showTime(timeMinutes, timeSeconds));
 		if (timeMinutes === 0 && timeSeconds === 0) {
-            //setTimeLeft('00:00');
-            //audioRef.current.pause();
-            //audioRef.current.currentTime = 0;
             audioRef.current.play();
             if(isSessionStatus) {
                 setTimerlabel(TIMER_LABEL_BREAK);
@@ -81,25 +73,29 @@ const App = () => {
             setTimeSeconds(timeSeconds - 1);
         }
     };
+    handlerTimeRef.current = handleTime;
     const reset = () => {
         setTimeLeft(showTime(SESSION_LENGTH, 0));
         setTimeMinutes(SESSION_LENGTH);
         setShortBreak(SHORT_BREAK);
         setIsRunning(false);
         setTimerlabel(TIMER_LABEL_SESSION);
-        clearInterval(timerInterval);
+        clearInterval(intervaleRef.current);
         setSessionLength(SESSION_LENGTH);
         setIsSessionStatus(true);
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
     };
     return (
-        <Container className="border rounded-lg text-center" style={{ minWidth: 300, maxWidth: 700 }}>
+        <Container className="border rounded-lg text-center mt-5" 
+            style={{ minWidth: 300, maxWidth: 700 }}
+        >
             <h1 className="display-4 text-secondary py-4"> Pomofocus </h1>
             <Row className="justify-content-center">
                 <Col>
-                    <div id="session-label" className="text-secondary pb-1"> Session length</div>
-                    
+                    <div id="session-label" className="text-secondary pb-1"> 
+                        Session length
+                    </div>
                     <InputGroup className="mx-auto" style={{width:130}} >
                         <Button
                             disabled={isRunning} 
@@ -125,7 +121,8 @@ const App = () => {
                                 ? parseInt(e.target.value)
                                 : 1;
                                 setSessionLength(currentMinutes);
-                                setTimeLeft(showTime(currentMinutes, timeSeconds));
+                                setTimeSeconds(0);
+                                setTimeLeft(showTime(currentMinutes, 0));
                                 setTimeMinutes((currentMinutes));
                             }}
                             style={{maxWidth:45}}
